@@ -61,6 +61,8 @@ const thebe_selector_input = "pre"
 const thebe_selector_output = ".output, .cell_output"
 </script>
     <script async="async" src="../../../_static/sphinx-thebe.js"></script>
+    <script>window.MathJax = {"options": {"processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'act_1/act_1_0/act_1_0_0/act_1_0_0_1';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
@@ -472,19 +474,10 @@ yhat_egfr_21 |     <span class="m">52</span>,<span class="m">494</span>    <span
 </Details>
 <Details>
    <Summary>3. Exemplars</Summary>
-Links to nice examples of online calculators 
-http://www.transplantmodels.com/ (this is a website developed by collaborators at Johns Hopkins and then they moved to NYU).
-http://www.transplantmodels.com/lkdpi/
-http://www.transplantmodels.com/esrdrisk/
-https://ckdpcrisk.org/pcr2acr_adj/
- 
-Thus, we only need to develop a calculator as the senior author of this article works at NYU and he will require to deploy the calculator at their website. So I think here is the best example:
-http://www.transplantmodels.com/esrdrisk/
-The outcome will be:
-Predicted post-donation six-month kidney function.
-Predicted Creatinine            Expected eGFRcr*
- 
-*CKD-EPI creatinine equation (2021)
+<p><a class="reference external" href="http://www.transplantmodels.com/">jhu/ergot</a><br />
+<a class="reference external" href="http://www.transplantmodels.com/lkdpi/">lkdpi</a><br />
+<a class="reference external" href="http://www.transplantmodels.com/esrdrisk/">esrdrisk</a><br />
+<a class="reference external" href="https://ckdpcrisk.org/pcr2acr_adj/">pcr2acr</a></p>
 </Details>
 <Details>
    <Summary>4. Script</Summary>
@@ -556,25 +549,34 @@ Predicted Creatinine            Expected eGFRcr*
 </Details>
 <Details>
    <Summary>5. Formula</Summary>
-Post-donation 6-m creatinine prediction equation 
-Equation: 6-month post-donation serum creatinine = 0.06 + [0.8192 (– 0.3593 if male)]*(predonation creatinine) + [0.1311 (+ 0.4733 if male)]*(predonation creatinine – 0.7)*(predonation creatinine>0.7) – 0.1581*(predonation creatinine – 0.9)*(predonation creatinine>0.9) + 0.3429*(male) + 0.0034*(BMI) – 0.0025*(BMI – 30)*(BMI>30) + 0.0024*(age) – 0.0007*(age – 55)*(age>55) + 0.1290*(height in meters) + 0.0075*(hypertension)
+<div class="admonition-equation admonition">
+<p class="admonition-title">Equation:</p>
+<p class="rubric">Post-donation 6-m creatinine prediction equation</p>
+<div class="math notranslate nohighlight">
+\[
+6m\ postcr = 0.06 + [0.8192 (– 0.3593\ if\ male)]*(precr) + [0.1311 (+ 0.4733\ if\ male)]*(precr\ – 0.7)*(precr&gt;0.7) – 0.1581*(precr – 0.9)*(precr&gt;0.9) + 0.3429*(male) + 0.0034*(BMI) – 0.0025*(BMI – 30)*(BMI&gt;30) + 0.0024*(age) – 0.0007*(age – 55)*(age&gt;55) + 0.1290*(hgt,m) + 0.0075*(htn)
+\]</div>
+</div>
+<p>SCr per 1 mg/dL increase<br />
+Age per 1 year increase<br />
+BMI per 1 kg/m2 increase<br />
+Height per 1 meter increase</p>
+<div class="highlight-stata notranslate"><div class="highlight"><pre><span></span><span class="c1">// predict yhat</span>
+<span class="c1">// Calculate the expected 6-m eGFR (CKDepi 2021) </span>
+<span class="c1">// Using the predicted creatinine from the above </span>
+
+<span class="k">gen</span> yhat_egfr_21  = <span class="m">142</span> <span class="o">*</span> <span class="cs">///</span>
+            <span class="nf">min</span>((yhat<span class="o">/</span><span class="nf">cond</span>(male, <span class="m">0.9</span>, <span class="m">0.7</span>)), <span class="m">1</span>)<span class="o">^</span><span class="nf">cond</span>(male, <span class="o">-</span><span class="m">0.302</span>, <span class="o">-</span><span class="m">0.241</span>)  <span class="o">*</span> <span class="cs">///</span>
+            <span class="nf">max</span>((yhat<span class="o">/</span><span class="nf">cond</span>(male, <span class="m">0.9</span>, <span class="m">0.7</span>)), <span class="m">1</span>)<span class="o">^</span>(<span class="o">-</span><span class="m">1.2</span>) <span class="o">*</span> <span class="cs">///  </span>
+            <span class="m">0.9938</span><span class="o">^</span>age <span class="o">*</span> <span class="nf">cond</span>(male, <span class="m">1</span>, <span class="m">1.012</span>) 
  
-SCr per 1 mg/dL increase  2Age per 1 year increase
-BMI per 1 kg/m2 increase
-Height per 1 meter increase 
- 
-predict yhat
-Calculate the expected 6-m eGFR (CKDepi 2021) using the predicted creatinine from the above 
-gen yhat_egfr_21  = 142 * ///
-            min((yhat/cond(male, 0.9, 0.7)), 1)^cond(male, -0.302, -0.241)  * ///
-            max((yhat/cond(male, 0.9, 0.7)), 1)^(-1.2) * ///  
-            0.9938^age * cond(male, 1, 1.012) 
- 
-Format number to be easily read for providers
-            format %9.2f don_ki_creat_preop yhat dfl_ki_creat
-            format %9.0f bfd_ckdepi2021 yhat_egfr_21 ad_ckdepi2021
-                        format %9.0f nbmi
-                                    format %9.2f ht_100
+Format number to be easily<span class="k"> read for</span> providers
+<span class="k">            format</span> <span class="nx">%9.2f</span> don_ki_creat_preop yhat dfl_ki_creat
+<span class="k">            format</span> <span class="nx">%9.0f</span> bfd_ckdepi2021 yhat_egfr_21 ad_ckdepi2021
+<span class="k">                        format</span> <span class="nx">%9.0f</span> nbmi
+<span class="k">                                    format</span> <span class="nx">%9.2f</span> ht_100
+</pre></div>
+</div>
 </Details>
 </section>
 
